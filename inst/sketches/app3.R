@@ -14,7 +14,8 @@ library(DT)
 if (!exists("brdat")) brdat = Breast2fov_10x()
 if (!exists("ludat")) ludat = Lung2fov_10x()
 
-docrop = function(spdat, shapeind = 1, tableind=1, cropview_name="pick", feature_name = "location_id") {
+docrop = function(spdat, shapeind = 1, tableind=1, cropview_name="pick", 
+ shape_feature_name = "location_id", table_feature_id = "cell_id") {
    baseplot = plotSpatialData() + plotShape(spdat, i=shapeind, c="black")
    brshpoly = st_as_sf(shape(spdat, i=shapeind)@data)
    pathdf <<- data.frame()
@@ -71,8 +72,8 @@ docrop = function(spdat, shapeind = 1, tableind=1, cropview_name="pick", feature
             shtrim = brshpoly[i=which(trim[,1]),]
             shapes(spdat)[[cropview_name]] <<- ShapeFrame(as.data.frame(shtrim))
             intab = tables(spdat)[[tableind]]
-            tables(spdat)[[cropview_name]] <<- intab[, which(intab[[feature_name]] %in%
-                 shapes(spdat)[[cropview_name]]@data[[feature_name]]) ]
+            tables(spdat)[[cropview_name]] <<- intab[, which(intab[[table_feature_id]] %in%
+                 shapes(spdat)[[cropview_name]]@data[[shape_feature_name]]) ]
             centers = shtrim |> st_centroid() |> st_coordinates()
             tables(spdat)[[cropview_name]]$xloc <<- centers[,1]
             tables(spdat)[[cropview_name]]$yloc <<- centers[,2]
