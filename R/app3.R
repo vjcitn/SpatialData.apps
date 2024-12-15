@@ -1,12 +1,4 @@
 #
-#
-#
-## set up spatial data
-#
-#if (!exists("brdat")) brdat = Breast2fov_10x()
-#if (!exists("ludat")) ludat = Lung2fov_10x()
-#
-#
 #' Use clicks on shape display of a SpatialData instance to define
 #' a cropping region, produce a new ShapeFrame, visualize it, and
 #' update the shapes and tables elements to respect the selected
@@ -15,12 +7,14 @@
 #' @import SpatialData
 #' @import SpatialData.plot
 #' @import SpatialData.data
-#' @import ggplot2
+#' @importFrom ggplot2 ggplot aes geom_point geom_path
+#' @importFrom S4Vectors metadata<- metadata
 #' @import sf
 #' @param spdat instance of SpatialData
 #' @param shapeind numeric(1), index of shapes(spdat) to use as base display
 #' @param tableind numeric(1) index of tables(spdat) to subset according to cropping
-#' @param cropview_name character(1) name used for updating list elements
+#' @param cropview_name character(1) name used for updating list elements; if already present,
+#' a message is given indicating overwriting will occur.
 #' @param shape_feature_name character(1) string used to identify shape element identifiers in ShapeFrame,
 #' defaults to "location_id"
 #' @param table_feature_id character(1) strings used to identify element of colData that can be matched
@@ -32,6 +26,8 @@
 #' @export
 crop_spd_app = function(spdat, shapeind = 1, tableind=1, cropview_name="pick", 
  shape_feature_name = "location_id", table_feature_id = "cell_id") {
+   snms = shapeNames(spdat)
+   if (cropview_name %in% snms) message(sprintf("'%s' is already in shapeNames(spdat), will overwrite shapes and tables with that name", cropview_name))
    baseplot = plotSpatialData() + plotShape(spdat, i=shapeind, c="black")
    brshpoly = st_as_sf(shape(spdat, i=shapeind)@data)
    pathdf <<- data.frame()
@@ -98,6 +94,7 @@ crop_spd_app = function(spdat, shapeind = 1, tableind=1, cropview_name="pick",
          if (input$closepath != 0) {
             pathdf <<- rbind(pathdf, pathdf[1,])
             pick_poly = st_polygon(list(abs(data.matrix(pathdf))))
+            metadata(spdat)$pick_poly_list <<- c(metadata(spdat)$pick_poly_list, pick_poly)
             trim = st_intersects(brshpoly, pick_poly, sparse=FALSE)
             shtrim = brshpoly[i=which(trim[,1]),]
             shapes(spdat)[[cropview_name]] <<- ShapeFrame(as.data.frame(shtrim))

@@ -1,6 +1,6 @@
 Package: SpatialData.apps
 Title: Interactive work with SpatialData.data resources
-Version: 0.0.1
+Version: 0.0.2
 Authors@R:
     person(given = "Vince",
            family = "Carey",
@@ -12,7 +12,7 @@ Description: This package illustrates interactive manipulation and
 Depends: R (>= 4.0.0), tools, utils
 Suggests: knitr, BiocStyle, testthat, rmarkdown
 Imports: SpatialData, SpatialData.data, shiny,
-	SpatialData.plot, ggplot2
+	SpatialData.plot, ggplot2, S4Vectors
 License: Artistic-2.0
 VignetteBuilder: knitr
 biocViews: Infrastructure

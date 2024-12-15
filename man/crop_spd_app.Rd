@@ -23,7 +23,8 @@ crop_spd_app(
 
 \item{tableind}{numeric(1) index of tables(spdat) to subset according to cropping}
 
-\item{cropview_name}{character(1) name used for updating list elements}
+\item{cropview_name}{character(1) name used for updating list elements; if already present,
+a message is given indicating overwriting will occur.}
 
 \item{shape_feature_name}{character(1) string used to identify shape element identifiers in ShapeFrame,
 defaults to "location_id"}
