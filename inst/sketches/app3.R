@@ -46,12 +46,12 @@ docrop = function(spdat, shapeind = 1, tableind=1, cropview_name="pick",
    
    server = function(input, output, session) {
     output$cropped = renderPlot({
-      nt = tables(spdat)[[ cropview_name ]]
-print(nt)
-      pts = data.frame(x=nt$xloc, y=nt$yloc)
-print(head(pts))
-      plotSpatialData() + plotShape(spdat, cropview_name, c="black") +
-           geom_point(data=pts, aes(x=x,y=y))
+#      nt = tables(spdat)[[ cropview_name ]]
+#print(nt)
+#      pts = data.frame(x=nt$xloc, y=nt$yloc)
+#print(head(pts))
+      plotSpatialData() + plotShape(spdat, cropview_name, c="black") # +
+#           geom_point(data=pts, aes(x=x,y=y))
       })
    
     observeEvent(input$clearpath, {
@@ -79,9 +79,9 @@ print(head(pts))
             intab = tables(spdat)[[tableind]]
             tables(spdat)[[cropview_name]] <<- intab[, which(intab[[table_feature_id]] %in%
                  shapes(spdat)[[cropview_name]]@data[[shape_feature_name]]) ]
-            centers = shtrim |> st_centroid() |> st_coordinates()
-            tables(spdat)[[cropview_name]]$xloc <<- centers[,1]
-            tables(spdat)[[cropview_name]]$yloc <<- centers[,2]
+#            centers = shtrim |> st_centroid() |> st_coordinates()
+#            tables(spdat)[[cropview_name]]$xloc <<- centers[,1]
+#            tables(spdat)[[cropview_name]]$yloc <<- centers[,2]
             }
          if (nrow(pathdf)>1)  p = p + geom_path(data=pathdf, aes(x=x,y=y), colour="red", linewidth=2)  # avoid "group" challenge message
          else  p = p + geom_point(data=pathdf, aes(x=x,y=y))  # avoid "group" challenge message
