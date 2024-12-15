@@ -56,6 +56,9 @@ crop_spd_app = function(spdat, shapeind = 1, tableind=1, cropview_name="pick",
         ),
        tabPanel("cropped",
         plotOutput("cropped", width="900px", height="900px"),
+        ),
+       tabPanel("data",
+        verbatimTextOutput("viewdat")
         )
        )
       )
@@ -79,6 +82,9 @@ crop_spd_app = function(spdat, shapeind = 1, tableind=1, cropview_name="pick",
     observeEvent(input$stopapp, {
        stopApp(spdat)
        })
+    output$viewdat = renderPrint({
+      print(spdat)
+    })
    
     output$cells = renderPlot({
      newx = input$click_inp$x
