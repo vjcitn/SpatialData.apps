@@ -46,7 +46,12 @@ docrop = function(spdat, shapeind = 1, tableind=1, cropview_name="pick",
    
    server = function(input, output, session) {
     output$cropped = renderPlot({
-      plotSpatialData() + plotShape(spdat, cropview_name, c="black")
+      nt = tables(spdat)[[ cropview_name ]]
+print(nt)
+      pts = data.frame(x=nt$xloc, y=nt$yloc)
+print(head(pts))
+      plotSpatialData() + plotShape(spdat, cropview_name, c="black") +
+           geom_point(data=pts, aes(x=x,y=y))
       })
    
     observeEvent(input$clearpath, {
