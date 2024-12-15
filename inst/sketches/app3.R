@@ -14,11 +14,9 @@ library(DT)
 if (!exists("brdat")) brdat = Breast2fov_10x()
 if (!exists("ludat")) ludat = Lung2fov_10x()
 
- if (!("pick" %in% shapeNames(brdat))) shapes(brdat)$pick = picked
-
-docrop = function(spdat, cropview="pick") {
-   baseplot = plotSpatialData() + plotShape(spdat, c="black")
-   brshpoly = st_as_sf(shape(spdat)@data)
+docrop = function(spdat, shapeind = 1, tableind=1, cropview_name="pick", feature_name = "location_id") {
+   baseplot = plotSpatialData() + plotShape(spdat, i=shapeind, c="black")
+   brshpoly = st_as_sf(shape(spdat, i=shapeind)@data)
    pathdf <<- data.frame()
    
    ui = fluidPage(
@@ -47,7 +45,7 @@ docrop = function(spdat, cropview="pick") {
    
    server = function(input, output, session) {
     output$cropped = renderPlot({
-      plotSpatialData() + plotShape(spdat, cropview, c="black")
+      plotSpatialData() + plotShape(spdat, cropview_name, c="black")
       })
    
     observeEvent(input$clearpath, {
@@ -64,14 +62,20 @@ docrop = function(spdat, cropview="pick") {
      if (nrow(pathdf)==0) {   # initial path info
         pathdf <<- data.frame(x=newx, y=newy)
         }
-     else {   # update path
+     else {   # update path, shape component, and table component
          pathdf <<- rbind(pathdf, data.frame(x=newx, y=newy))
          if (input$closepath != 0) {
             pathdf <<- rbind(pathdf, pathdf[1,])
             pick_poly = st_polygon(list(abs(data.matrix(pathdf))))
             trim = st_intersects(brshpoly, pick_poly, sparse=FALSE)
             shtrim = brshpoly[i=which(trim[,1]),]
-            shapes(spdat)[[cropview]] <<- ShapeFrame(as.data.frame(shtrim))
+            shapes(spdat)[[cropview_name]] <<- ShapeFrame(as.data.frame(shtrim))
+            intab = tables(spdat)[[tableind]]
+            tables(spdat)[[cropview_name]] <<- intab[, which(intab[[feature_name]] %in%
+                 shapes(spdat)[[cropview_name]]@data[[feature_name]]) ]
+            centers = shtrim |> st_centroid() |> st_coordinates()
+            tables(spdat)[[cropview_name]]$xloc <<- centers[,1]
+            tables(spdat)[[cropview_name]]$yloc <<- centers[,2]
             }
          if (nrow(pathdf)>1)  p = p + geom_path(data=pathdf, aes(x=x,y=y), colour="red", linewidth=2)  # avoid "group" challenge message
          else  p = p + geom_point(data=pathdf, aes(x=x,y=y))  # avoid "group" challenge message
