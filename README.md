@@ -46,3 +46,18 @@ coordinate systems:
   transcripts
 ```
 
+Different components of example datasets have different values that
+must be supplied for the app to succeed.  The table below shows how
+`shape_feature_name` and `table_feature_id` should be set for use with
+different example datasets in SpatialData.data.
+```
+> app_support
+                   funname shapeind tabind shape_feature_name table_feature_id
+1      MouseIntestineVisHD        2      2        location_id      location_id
+2             Lung2fov_10x        1      1  __index_level_0__          cell_id
+3           Breast2fov_10x        1      1  __index_level_0__          cell_id
+4        MouseBrainMERFISH        2      1            cell_id          cell_id
+5 JanesickBreastXeniumRep1        1      1  __index_level_0__          cell_id
+6 JanesickBreastXeniumRep2        1      1  __index_level_0__          cell_id
+```
+
