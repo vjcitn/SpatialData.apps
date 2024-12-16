@@ -12,7 +12,7 @@ Description: This package illustrates interactive manipulation and
 Depends: R (>= 4.0.0), tools, utils
 Suggests: knitr, BiocStyle, testthat, rmarkdown
 Imports: SpatialData, SpatialData.data, shiny,
-	SpatialData.plot, ggplot2, S4Vectors
+	SpatialData.plot, ggplot2, S4Vectors, plotly
 License: Artistic-2.0
 VignetteBuilder: knitr
 biocViews: Infrastructure
