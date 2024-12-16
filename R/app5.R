@@ -11,12 +11,14 @@
 #' @importFrom ggplot2 ggplot aes geom_point geom_path scale_y_reverse geom_sf
 #' @importFrom S4Vectors metadata<- metadata
 #' @import sf
-#' @param spdat instance of SpatialData
+#' @param spdatname character(1) name of function that retrieves SpatialData instance
+#' defined in SpatialData.data package 
+#' @param typetag character(1) name of colData variable in table() that maps cells to type, when available
 #' @examples
 #' blk = crop_spd_simple("Breast2fov_10x")
 #' blk
 #' @export
-crop_spd_simple = function(spdatname) {
+crop_spd_simple = function(spdatname, typetag="celltype_major") {
    utils::data("app_support", package="SpatialData.apps")
    cropview_name = "pick"
    rownames(app_support) = app_support[[1]]
@@ -85,7 +87,7 @@ crop_spd_simple = function(spdatname) {
       okids = intersect(as.character(sfsel$cell_id), colnames(xta))
       newsf = sfsel[which(sfsel$cell_id %in% okids),]
       newtab = xta[, as.character(newsf$cell_id)]
-      newsf$type = newtab$celltype_major
+      newsf$type = newtab[[typetag]] # celltype_major
       plotly::ggplotly(ggplot() + scale_y_reverse() + geom_sf(data=newsf, aes(fill=type)))
       })
 

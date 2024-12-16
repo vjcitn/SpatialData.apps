@@ -7,10 +7,13 @@ a cropping region, produce a new ShapeFrame, visualize it, and
 update the shapes and tables elements to respect the selected
 shape elements.}
 \usage{
-crop_spd_simple(spdatname)
+crop_spd_simple(spdatname, typetag = "celltype_major")
 }
 \arguments{
-\item{spdat}{instance of SpatialData}
+\item{spdatname}{character(1) name of function that retrieves SpatialData instance
+defined in SpatialData.data package}
+
+\item{typetag}{character(1) name of colData variable in table() that maps cells to type, when available}
 }
 \description{
 Use clicks on shape display of a SpatialData instance to define
