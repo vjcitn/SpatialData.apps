@@ -1,6 +1,6 @@
 Package: SpatialData.apps
 Title: Interactive work with SpatialData.data resources
-Version: 0.0.2
+Version: 0.0.4
 Authors@R:
     person(given = "Vince",
            family = "Carey",
