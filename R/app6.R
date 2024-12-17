@@ -15,25 +15,18 @@
 #' @param spdatname character(1) name of function that retrieves SpatialData instance
 #' defined in SpatialData.data package 
 #' @param typetag character(1) name of colData variable in table() that maps cells to type, when available
-#' @param zarrfolder character(1) or NULL, if non-null, readSpatialData is used to set up data,
-#' this avoids the uncaching step that occurs when working directly with SpatialData.data functions,
-#' but the zarrfolder must correspond to one of the dataset obtained through functions defined in
-#' app_support.
 #' @examples
-#' blk = crop_spd_simple("Breast2fov_10x")
+#' blk = crop_spd_multi("Breast2fov_10x")
 #' blk
 #' @export
-crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL) {
+crop_spd_multi = function(spdatname, typetag="celltype_major") {
    utils::data("app_support", package="SpatialData.apps")
    cropview_name = "pick"
    rownames(app_support) = app_support[[1]]
    names(app_support)[3] = "tableind"
    stopifnot (spdatname %in% rownames(app_support))
    curdat = app_support[spdatname,-1]
-   if (is.null(zarrfolder)) {
-     spdat = get(spdatname)()
-     }
-   else spdat = SpatialData::readSpatialData(zarrfolder)  # avoids unzipping
+   spdat = get(spdatname)()
    snms = shapeNames(spdat)
    if (cropview_name %in% snms) message(sprintf("'%s' is already in shapeNames(spdat), will overwrite shapes and tables with that name", cropview_name))
    baseplot = plotSpatialData() + plotShape(spdat, i=curdat$shapeind, c="black")
@@ -49,6 +42,7 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
           Do not close the region, but use the closepath button below to
           close.  The region will then be visible on the 'cropped' tab."),
       actionButton("closepath", "closepath"), 
+      actionButton("nextbutton", "new path"), 
       helpText("Stopping will return the cropped and updated instance to the session."),
       actionButton("stopapp", "stop app"), 
       width=2
@@ -75,24 +69,20 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
    
    server = function(input, output, session) {
     output$cropped = renderPlot({
-#      nt = tables(spdat)[[ cropview_name ]]
-#print(nt)
-#      pts = data.frame(x=nt$xloc, y=nt$yloc)
-#print(head(pts))
+      if (input$closepath > 0) cropview_name = paste0(cropview_name, input$closepath)
       plotSpatialData() + plotShape(spdat, cropview_name, c="black") # +
-#           geom_point(data=pts, aes(x=x,y=y))
       })
    
-    observeEvent(input$clearpath, {
+    observeEvent(input$nextbutton, {
        pathdf <<- data.frame()
        })
 
     output$trytype = renderPlotly({
-      validate(need("pick" %in% tableNames(spdat), "can't find table named 'pick'"))
-      #if (!("pick" %in% tableNames(spdat))) print"can't find table named 'pick'")
-      xta = SpatialData::tables(spdat)$pick
+      if (input$closepath > 0) cropview_name = paste0(cropview_name, input$closepath)
+      validate(need(cropview_name %in% tableNames(spdat), sprintf("can't find table named '%s'", cropview_name)))
+      xta = SpatialData::tables(spdat)[[cropview_name]]
       validate(need(typetag %in% names(colData(xta)), "'typetag' value not found in colData of table"))
-      sfsel = shape(spdat,"pick")@data |> sf::st_as_sf()
+      sfsel = shape(spdat,cropview_name)@data |> sf::st_as_sf()
       colnames(xta) = as.character(colnames(xta))
       okids = intersect(as.character(sfsel$cell_id), colnames(xta))
       newsf = sfsel[which(sfsel$cell_id %in% okids),]
@@ -110,6 +100,7 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
     })
    
     output$cells = renderPlot({
+     if (input$closepath > 0) cropview_name = paste0(cropview_name, input$closepath)
      newx = input$click_inp$x
      newy = input$click_inp$y
      p = baseplot #+ geom_point(data=datp, aes(x=x,y=y))  # initial display

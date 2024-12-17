@@ -15,25 +15,18 @@
 #' @param spdatname character(1) name of function that retrieves SpatialData instance
 #' defined in SpatialData.data package 
 #' @param typetag character(1) name of colData variable in table() that maps cells to type, when available
-#' @param zarrfolder character(1) or NULL, if non-null, readSpatialData is used to set up data,
-#' this avoids the uncaching step that occurs when working directly with SpatialData.data functions,
-#' but the zarrfolder must correspond to one of the dataset obtained through functions defined in
-#' app_support.
 #' @examples
-#' blk = crop_spd_simple("Breast2fov_10x")
+#' blk = crop_spd_simply("JanesickBreastXeniumRep1")
 #' blk
 #' @export
-crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL) {
+crop_spd_simply = function(spdatname, typetag="celltype_major") {
    utils::data("app_support", package="SpatialData.apps")
    cropview_name = "pick"
    rownames(app_support) = app_support[[1]]
    names(app_support)[3] = "tableind"
    stopifnot (spdatname %in% rownames(app_support))
    curdat = app_support[spdatname,-1]
-   if (is.null(zarrfolder)) {
-     spdat = get(spdatname)()
-     }
-   else spdat = SpatialData::readSpatialData(zarrfolder)  # avoids unzipping
+   spdat = get(spdatname)()
    snms = shapeNames(spdat)
    if (cropview_name %in% snms) message(sprintf("'%s' is already in shapeNames(spdat), will overwrite shapes and tables with that name", cropview_name))
    baseplot = plotSpatialData() + plotShape(spdat, i=curdat$shapeind, c="black")
@@ -57,6 +50,9 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
       tabsetPanel(
        tabPanel("cells",
         plotOutput("cells", width="900px", height="900px", click="click_inp"),
+        ),
+       tabPanel("cells2",
+        plotlyOutput("cells2", width="900px", height="900px"),
         ),
        tabPanel("cropped",
         plotOutput("cropped", width="900px", height="900px"),
@@ -136,6 +132,9 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
          else  p = p + geom_point(data=pathdf, aes(x=x,y=y))  # avoid "group" challenge message
          }
      p
+    })
+    output$cells2 = renderPlotly({
+     plotly::ggplotly(baseplot)
     })
    
        

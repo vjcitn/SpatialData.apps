@@ -2,45 +2,37 @@
 #' Use clicks on shape display of a SpatialData instance to define
 #' a cropping region, produce a new ShapeFrame, visualize it, and
 #' update the shapes and tables elements to respect the selected
-#' shape elements.
+#' shape elements.  This version ships to console via rstudioapi::sendToConsole
 #' @import shiny
 #' @import SpatialData
 #' @import SpatialData.plot
 #' @import SpatialData.data
-#' @importFrom plotly ggplotly plotlyOutput renderPlotly
-#' @importFrom ggplot2 ggplot aes geom_point geom_path scale_y_reverse geom_sf
+#' @importFrom ggplot2 ggplot aes geom_point geom_path
 #' @importFrom S4Vectors metadata<- metadata
-#' @importFrom SummarizedExperiment rowData colData
 #' @import sf
-#' @param spdatname character(1) name of function that retrieves SpatialData instance
-#' defined in SpatialData.data package 
-#' @param typetag character(1) name of colData variable in table() that maps cells to type, when available
-#' @param zarrfolder character(1) or NULL, if non-null, readSpatialData is used to set up data,
-#' this avoids the uncaching step that occurs when working directly with SpatialData.data functions,
-#' but the zarrfolder must correspond to one of the dataset obtained through functions defined in
-#' app_support.
+#' @param spdat instance of SpatialData
+#' @param shapeind numeric(1), index of shapes(spdat) to use as base display
+#' @param tableind numeric(1) index of tables(spdat) to subset according to cropping
+#' @param cropview_name character(1) name used for updating list elements; if already present,
+#' a message is given indicating overwriting will occur.
+#' @param shape_feature_name character(1) string used to identify shape element identifiers in ShapeFrame,
+#' defaults to "location_id"
+#' @param table_feature_id character(1) strings used to identify element of colData that can be matched
+#' by values of shape_feature_name in ShapeFrame of cropped SpatialData
 #' @examples
-#' blk = crop_spd_simple("Breast2fov_10x")
+#' brdat = SpatialData.data::Breast2fov_10x()
+#' blk = crop_spd_app(brdat, shape_feature_name = "__index_level_0__")
 #' blk
 #' @export
-crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL) {
-   utils::data("app_support", package="SpatialData.apps")
-   cropview_name = "pick"
-   rownames(app_support) = app_support[[1]]
-   names(app_support)[3] = "tableind"
-   stopifnot (spdatname %in% rownames(app_support))
-   curdat = app_support[spdatname,-1]
-   if (is.null(zarrfolder)) {
-     spdat = get(spdatname)()
-     }
-   else spdat = SpatialData::readSpatialData(zarrfolder)  # avoids unzipping
+crop_spd_app_api = function(spdat, shapeind = 1, tableind=1, cropview_name="pick", 
+ shape_feature_name = "location_id", table_feature_id = "cell_id") {
    snms = shapeNames(spdat)
    if (cropview_name %in% snms) message(sprintf("'%s' is already in shapeNames(spdat), will overwrite shapes and tables with that name", cropview_name))
-   baseplot = plotSpatialData() + plotShape(spdat, i=curdat$shapeind, c="black")
-   brshpoly = st_as_sf(shape(spdat, i=curdat$shapeind)@data)
+   baseplot = plotSpatialData() + plotShape(spdat, i=shapeind, c="black")
+   brshpoly = st_as_sf(shape(spdat, i=shapeind)@data)
    pathdf <<- data.frame()
    
-   ui = fluidPage(
+   ui2 <<- fluidPage(
     sidebarLayout(
      sidebarPanel(
       helpText("region selector app"),
@@ -61,9 +53,6 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
        tabPanel("cropped",
         plotOutput("cropped", width="900px", height="900px"),
         ),
-       tabPanel("types",
-        plotly::plotlyOutput("trytype", height="900px")
-        ),
        tabPanel("data",
         verbatimTextOutput("viewdat")
         )
@@ -73,7 +62,7 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
     )
    
    
-   server = function(input, output, session) {
+   server2 <<- function(input, output, session) {
     output$cropped = renderPlot({
 #      nt = tables(spdat)[[ cropview_name ]]
 #print(nt)
@@ -86,24 +75,8 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
     observeEvent(input$clearpath, {
        pathdf <<- data.frame()
        })
-
-    output$trytype = renderPlotly({
-      validate(need("pick" %in% tableNames(spdat), "can't find table named 'pick'"))
-      #if (!("pick" %in% tableNames(spdat))) print"can't find table named 'pick'")
-      xta = SpatialData::tables(spdat)$pick
-      validate(need(typetag %in% names(colData(xta)), "'typetag' value not found in colData of table"))
-      sfsel = shape(spdat,"pick")@data |> sf::st_as_sf()
-      colnames(xta) = as.character(colnames(xta))
-      okids = intersect(as.character(sfsel$cell_id), colnames(xta))
-      newsf = sfsel[which(sfsel$cell_id %in% okids),]
-      newtab = xta[, as.character(newsf$cell_id)]
-      newsf$type = newtab[[typetag]] # celltype_major
-      plotly::ggplotly(ggplot() + scale_y_reverse() + geom_sf(data=newsf, aes(fill=type)))
-      })
-
-
     observeEvent(input$stopapp, {
-         stopApp(spdat)
+       stopApp(spdat)
        })
     output$viewdat = renderPrint({
       print(spdat)
@@ -125,9 +98,9 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
             trim = st_intersects(brshpoly, pick_poly, sparse=FALSE)
             shtrim = brshpoly[i=which(trim[,1]),]
             shapes(spdat)[[cropview_name]] <<- ShapeFrame(as.data.frame(shtrim))
-            intab = tables(spdat)[[curdat$tableind]]
-            tables(spdat)[[cropview_name]] <<- intab[, which(intab[[curdat$table_feature_id]] %in%
-                 shapes(spdat)[[cropview_name]]@data[[curdat$shape_feature_name]]) ]
+            intab = tables(spdat)[[tableind]]
+            tables(spdat)[[cropview_name]] <<- intab[, which(intab[[table_feature_id]] %in%
+                 shapes(spdat)[[cropview_name]]@data[[shape_feature_name]]) ]
 #            centers = shtrim |> st_centroid() |> st_coordinates()
 #            tables(spdat)[[cropview_name]]$xloc <<- centers[,1]
 #            tables(spdat)[[cropview_name]]$yloc <<- centers[,2]
@@ -141,5 +114,5 @@ crop_spd_simple = function(spdatname, typetag="celltype_major", zarrfolder=NULL)
        
    }
    
-   runApp(list(ui=ui, server=server))
+   rstudioapi::sendToConsole(".res <<- shinyApp(ui2, server2)")
 }
