@@ -5,6 +5,12 @@ to interactively select subregions of SpatialData instances.
 
 Install with `BiocManager::install("vjcitn/SpatialData.apps")`.
 
+NB: `crop_spd_simple("JanesickBreastXeniumRep1")` will be slow
+to start but after selection, the 'types' tab will provide
+a plotly interface to the selected cells and their types as
+declared in the table variable given as 'typetag'.
+
+
 `example(crop_spd_app, ask=FALSE)` will start the app.  The
 sidebar panel explains operations.  You have the opportunity to
 use mouse clicks to define a region of interest.  The "closepath"
