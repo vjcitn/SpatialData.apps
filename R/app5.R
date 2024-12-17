@@ -10,6 +10,7 @@
 #' @importFrom plotly ggplotly plotlyOutput renderPlotly
 #' @importFrom ggplot2 ggplot aes geom_point geom_path scale_y_reverse geom_sf
 #' @importFrom S4Vectors metadata<- metadata
+#' @importFrom SummarizedExperiment rowData colData
 #' @import sf
 #' @param spdatname character(1) name of function that retrieves SpatialData instance
 #' defined in SpatialData.data package 
@@ -80,8 +81,10 @@ crop_spd_simple = function(spdatname, typetag="celltype_major") {
        })
 
     output$trytype = renderPlotly({
-      req("pick" %in% tableNames(spdat))
+      validate(need("pick" %in% tableNames(spdat), "can't find table named 'pick'"))
+      #if (!("pick" %in% tableNames(spdat))) print"can't find table named 'pick'")
       xta = SpatialData::tables(spdat)$pick
+      validate(need(typetag %in% names(colData(xta)), "'typetag' value not found in colData of table"))
       sfsel = shape(spdat,"pick")@data |> sf::st_as_sf()
       colnames(xta) = as.character(colnames(xta))
       okids = intersect(as.character(sfsel$cell_id), colnames(xta))
